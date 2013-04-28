@@ -1,0 +1,22 @@
+name:                     chunk-point-cloud
+version:                  0.1
+homepage:                 http://github.com/ImAlsoGreg/chunk-point-cloud
+synopsis:                 Data structure for collecting clouds of points
+description:              
+        A data structure for accumulating large numbers of multidimensional
+        points.  New points added very near to old ones are combined into
+        one larger point.
+category:                 Data
+license:                  BSD-3
+license-file:             LICENSE
+author:                   Greg Hale
+maintainer:               imalsogreg@gmail.com
+cabal-version:            >= 1.8
+build-type:               Simple
+
+library
+        build-depends:    kdtree
+        ghc-options:      -Wall
+        hs-source-dirs:   src
+        exposed-modules:  Data.ChunkPointCloud
+
