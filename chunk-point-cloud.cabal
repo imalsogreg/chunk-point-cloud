@@ -7,7 +7,7 @@ description:
         points.  New points added very near to old ones are combined into
         one larger point.
 category:                 Data
-license:                  BSD-3
+license:                  BSD3
 license-file:             LICENSE
 author:                   Greg Hale
 maintainer:               imalsogreg@gmail.com
@@ -15,8 +15,10 @@ cabal-version:            >= 1.8
 build-type:               Simple
 
 library
-        build-depends:    kdtree
-        ghc-options:      -Wall
-        hs-source-dirs:   src
-        exposed-modules:  Data.ChunkPointCloud
+        build-depends:     base >= 3 && <= 5
+                          ,KdTree -any
+                          ,async
+        ghc-options:       -Wall
+        hs-source-dirs:    src
+        exposed-modules:   Data.ChunkPointCloud
 
