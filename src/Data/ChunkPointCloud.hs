@@ -5,16 +5,17 @@
 
 module Data.ChunkPointCloud where
 
+import Data.Maybe
 import qualified Data.Point        as P
 import qualified Data.Trees.KdTree as K
 
 
-data ChunkPointCloud c = ChunkPointCloud { chunks :: K.KdTree c
+data ChunkPointCloud cp = ChunkPointCloud { chunks :: K.KdTree cp
                                          , critDist2 :: Double
                                          }
 
 -- |Chunks all have location (point) and weight
-class Chunk p cp | p -> cp where
+class (P.Point p) => Chunk p cp | cp -> p where
   mkChunk  :: p -> Double -> cp
   location :: cp -> p
   weight   :: cp -> Double
@@ -33,36 +34,40 @@ instance  (Ord e, Num e, P.Point p e) => P.Point (BasicChunk p) e  where
   element n c  = P.element n (location c)
   dist2   a b  = P.dist2 (location a) (location b)
 
---instance (P.Point p e, P.Point p2 e) => Chunk (BasicChunk p) p2 where
-instance Chunk p (BasicChunk p) where
+instance (Ord e, Num e, P.Point p e, P.Point cp e) => Chunk (BasicChunk cp) cp where
+--instance Chunk p (BasicChunk p) where
   mkChunk pos w = BasicChunk { basicLoc=pos, basicWeight=w }
   location c    = basicLoc c
   weight   c    = basicWeight c
 
 
 
-replaceChunkInCloud :: (Ord e, Num e, P.Point p e, Chunk p cp) => cp -> cp -> ChunkPointCloud cp -> ChunkPointCloud cp
-replaceChunkInCloud oldP newP pCloud = 
+getCloudChunks pCloud = chunks pCloud
+
+--replaceChunkInCloud :: (P.Point p e, Chunk p cp) => cp -> cp -> ChunkPointCloud cp -> ChunkPointCloud cp
+--replaceChunkInCloud :: (P.Point p e, Chunk p cp) =>  Chunk p cp -> Chunk p cp -> ChunkPointCloud (K.KdTree cp)
+--replaceChunkInCloud :: (P.Point cp p) => cp -> cp -> (ChunkPointCloud cp)
+replaceChunkInCloud oldChunk newChunk pCloud = 
   pCloud {chunks = newChunks}
     where
-      oldChunks :: K.KdTree cp
+--      oldChunks :: K.KdTree cp
       oldChunks = chunks pCloud
-      newChunks :: K.KdTree cp
-      newChunks = K.addPoint newP (K.remove oldP oldChunks)
+      newChunks = K.addPoint newChunk (K.remove oldChunk oldChunks)
       
 integratePointIntoChunk :: (P.Point p e, Chunk p cp) =>  p -> cp -> cp
 integratePointIntoChunk pnt chnk = mkChunk pnt 1.0
                          
-{-
-addPoint :: (P.Point p e, Chunk c p) => p -> ChunkPointCloud c -> ChunkPointCloud c
+
+--addPoint :: (P.Point p e, Chunk c p) => p -> ChunkPointCloud c -> ChunkPointCloud c
+
 addPoint pnt pCloud
-  | pDist2 < (critDist2 pCloud) = updatePoint nearestChunk modChunk pCloud
+  | pDist2 < (critDist2 pCloud) = replaceChunkInCloud nearestChunk modChunk pCloud
   | otherwise                   = K.addPoint (mkChunk pnt 1.0) pCloud
     where
-      nearestChunk = K.nearestNeighbor pnt pCloud
+      nearestChunk = fromJust $ K.nearestNeighbor pnt pCloud
       pDist2 = P.dist2 pnt nearestChunk
       modChunk = integratePointIntoChunk pnt nearestChunk
-  -}                              
+
   
                                 
                                 
