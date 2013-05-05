@@ -1,41 +1,40 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Data.ChunkPointCloud where
 
 import Data.Maybe
-import qualified Data.Point        as P
+import Data.Point
 import qualified Data.Trees.KdTree as K
 
 
 data ChunkPointCloud p = ChunkPointCloud { chunks :: K.KdTree p
                                           , critDist2 :: Double
                                           }
-
+{-
 -- |Chunks all have location (point) and weight
-class Chunk c p | c -> p where
-  mkChunk  :: p -> Double -> c
-  location :: c -> p
+class Chunk c where
+  type Centroid c
+  location :: c -> Centroid c
   weight   :: c -> Double
+-}
 
 -- |A simple chunk type carrying no special data
 data BasicChunk p = BasicChunk { basicLoc :: p
                                , basicWeight :: Double
                                }
 
-{-
--- |A (BasicChunk p) is a point because it has a location
-instance  (P.Point p Double) => P.Point (BasicChunk p) Double  where
-  dimensions c = P.dimensions (location c)
-  element n c  = P.element n (location c)
-  dist2   a b  = P.dist2 (location a) (location b)
--}
 
+-- |A (BasicChunk p) is a point because it has a location
+instance (Ord p, Num p, Point p) => Point (BasicChunk p)  where
+  
+  type Elem (BasicChunk p) = p
+  mkPoint =  id
+--  dimensions c = P.dimensions (location c)
+--  element n c  = P.element n (location c)
+--  dist2   a b  = P.dist2 (location a) (location b)
+
+{-
 instance (P.Point p e) => Chunk (BasicChunk p) p where
-  mkChunk pos w = BasicChunk { basicLoc=pos, basicWeight=w }
   location c    = basicLoc c
   weight   c    = basicWeight c
 
@@ -58,6 +57,7 @@ replaceChunkInCloud oldChunk newChunk pCloud =
       newChunks = K.addPoint newChunk (K.remove oldChunks oldChunk)
 
 --instance P.Point p Double
+
 
 -- |Weighted mean location between two points
 twoPointWeightedMean :: (RealFloat e, P.Point p e) => p -> e -> p -> e -> p
@@ -97,7 +97,7 @@ addPointToCloud pnt pCloud
 
   
                                 
-{-                       
+
 data Point1d = Point1d { p1x :: Double }                         
                deriving (Eq, Ord, Show)
 
@@ -116,12 +116,12 @@ data Point8d = Point8d { p8a :: Double, p8b :: Double
                        , p8e :: Double, p8f :: Double
                        , p8g :: Double, p8h :: Double }
                deriving (Eq, Ord, Show)
-                        
+
 instance P.Point Point1d Double where
-  dimensions _ p = 1
-  element 0 p = p1x
+  dimensions _ = 1
+  element 0 p = p1x p
   dist2 a b = P.diff2 a b 0
-  
+
 instance P.Point Point2d Double where
   dimensions _ p = 2
   element 0 = p2x
